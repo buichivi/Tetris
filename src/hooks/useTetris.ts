@@ -5,13 +5,19 @@ export type Cell = {
     x: number;
     y: number;
     color: string;
+    type: 'cell' | 'tetrimino-block';
 };
 
 const initBoard: Cell[][] = [];
 for (let i = 0; i < ROW; i++) {
     const rowCells: Cell[] = [];
     for (let j = 0; j < COL; j++) {
-        const cell: Cell = { x: i, y: j, color: DEFAULT_CELL_COLOR };
+        const cell: Cell = {
+            x: i,
+            y: j,
+            color: DEFAULT_CELL_COLOR,
+            type: 'cell',
+        };
         rowCells.push(cell);
     }
     initBoard.push(rowCells);
@@ -36,7 +42,11 @@ const useTetris = () => {
                         pos_y <= shape_y_l - 1
                     ) {
                         if (player.tetrimino.shape[pos_y][pos_x] === 1)
-                            return { ...cell, color: player.tetrimino.color };
+                            return {
+                                ...cell,
+                                color: player.tetrimino.color,
+                                type: 'tetrimino-block',
+                            };
                     }
 
                     return cell;

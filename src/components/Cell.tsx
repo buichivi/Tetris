@@ -3,12 +3,13 @@ import { Cell } from '../hooks/useTetris';
 
 type Props = {
     cell: Cell;
+    className?: string;
 };
 
-const CellItem = ({ cell }: Props) => {
+const CellItem = ({ cell, className }: Props) => {
     return (
         <div
-            className={`shrink-0 border`}
+            className={`shrink-0 border ${className}`}
             style={{
                 backgroundColor: cell.color,
                 width: CELL_SIZE,

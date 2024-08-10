@@ -30,7 +30,11 @@ const TetrominoBlock = ({ position, tetromino }: Props) => {
                                         color: haveColor
                                             ? tetromino.color
                                             : DEFAULT_CELL_COLOR,
+                                        type: haveColor
+                                            ? 'tetrimino-block'
+                                            : 'cell',
                                     }}
+                                    className={`${!haveColor && 'opacity-0'}`}
                                 />
                             );
                         })}
