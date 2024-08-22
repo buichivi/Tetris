@@ -3,112 +3,134 @@ import { COL, Player, randomTetromino, ROW, Tetromino } from '../helpers/Types';
 import { Cell } from './useTetris';
 
 const initPlayer: Tetromino = randomTetromino();
+
 enum Key {
-    UP = 'ArrowUp',
-    DOWN = 'ArrowDown',
-    LEFT = 'ArrowLeft',
-    RIGHT = 'ArrowRight',
-    SPACE = 'Space',
+  UP = 'ArrowUp',
+  DOWN = 'ArrowDown',
+  LEFT = 'ArrowLeft',
+  RIGHT = 'ArrowRight',
+  SPACE = 'Space',
 }
 
 export const usePlayer = () => {
-    const [player, setPlayer] = useState<Player>({
-        position: { x: 4, y: 0 },
-        tetrimino: initPlayer,
+  const [player, setPlayer] = useState<Player>({
+    position: { x: 4, y: 0 },
+    tetromino: initPlayer,
+  });
+
+  const drop = (): void => {
+    setPlayer((prevPlayer) => ({
+      ...prevPlayer,
+      position: { ...prevPlayer.position, y: prevPlayer.position.y + 1 },
+    }));
+  };
+
+  const createNewPlayer = (): void => {
+    setPlayer({
+      position: { x: 4, y: 0 },
+      tetromino: randomTetromino(),
     });
+  };
 
-    const drop = (): void => {
-        setPlayer((player) => ({
-            ...player,
-            position: {
-                ...player.position,
-                y: player.position.y + 1,
-            },
-        }));
-    };
+  const isColliding = (board: Cell[][]): boolean => {
+    return isCollision(board, { ...player.position, y: player.position.y + 1 }, player.tetromino.shape);
+  };
 
-    const createNewPlayer = (): void => {
-        setPlayer({
-            position: { x: 4, y: 0 },
-            tetrimino: randomTetromino(),
-        });
-    };
+  const rotate = (): void => {
+    const newTetromino = rotateTetromino(player.tetromino);
+    setPlayer((prevPlayer) => ({ ...prevPlayer, tetromino: newTetromino }));
+  };
 
-    const isCollison = (board: Cell[][]): boolean => {
-        const shape_y_l = player.tetrimino.shape.length;
-        if (player.position.y + shape_y_l === ROW) {
+  const hardDrop = (board: Cell[][]): void => {
+    const { shape } = player.tetromino;
+    let newY = player.position.y;
+
+    while (!isCollision(board, { ...player.position, y: newY + 1 }, shape)) {
+      newY++;
+    }
+
+    setPlayer((prev) => ({ ...prev, position: { ...prev.position, y: newY } }));
+  };
+
+  const rotateAndMoveTetromino = (e: KeyboardEvent, board: Cell[][]): void => {
+    switch (e.code) {
+      case Key.UP:
+        rotate();
+        break;
+      case Key.DOWN:
+        if (player.position.y < ROW) drop();
+        break;
+      case Key.LEFT:
+        moveHorizontally(-1, board);
+        break;
+      case Key.RIGHT:
+        moveHorizontally(1, board);
+        break;
+      case Key.SPACE:
+        hardDrop(board);
+        break;
+    }
+  };
+
+  const moveHorizontally = (direction: 1 | -1, board: Cell[][]): void => {
+    setPlayer((prevPlayer) => {
+      const newX = prevPlayer.position.x + direction;
+      if (isValidMove(newX, prevPlayer.position.y, prevPlayer.tetromino.shape, board)) {
+        return {
+          ...prevPlayer,
+          position: { ...prevPlayer.position, x: newX },
+        };
+      }
+      return prevPlayer;
+    });
+  };
+
+  const isValidMove = (x: number, y: number, shape: number[][], board: Cell[][]): boolean => {
+    for (let row = 0; row < shape.length; row++) {
+      for (let col = 0; col < shape[row].length; col++) {
+        if (shape[row][col] === 1) {
+          const newX = x + col;
+          const newY = y + row;
+          if (newX < 0 || newX >= COL || newY >= ROW || (board[newY] && board[newY][newX].type === 'tetromino-block')) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
+  const rotateTetromino = (tetromino: Tetromino): Tetromino => {
+    const newShape = tetromino.shape[0].map((_, colIndex) => tetromino.shape.map((row) => row[colIndex]).reverse());
+
+    if (player.position.x < 0) {
+      setPlayer((prevPlayer) => ({ ...prevPlayer, position: { ...prevPlayer.position, x: 0 } }));
+    }
+
+    if (player.position.x + newShape[0].length > COL) {
+      setPlayer((prevPlayer) => ({
+        ...prevPlayer,
+        position: { ...prevPlayer.position, x: COL - newShape[0].length },
+      }));
+    }
+
+    return { ...tetromino, shape: newShape };
+  };
+
+  const isCollision = (board: Cell[][], position: { x: number; y: number }, shape: number[][]): boolean => {
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (shape[y][x] !== 0) {
+          const newY = y + position.y;
+          const newX = x + position.x;
+          if (newY >= ROW || newX < 0 || newX >= COL || (board[newY] && board[newY][newX].type === 'tetromino-block')) {
             return true;
+          }
         }
-        if (
-            player.position.x + (player.tetrimino.shape[0].length - 1) <=
-            COL - 1
-        ) {
-            for (
-                let i = player.position.x;
-                i <= player.position.x + (player.tetrimino.shape[0].length - 1);
-                i++
-            ) {
-                for (let j = 0; j < shape_y_l; j++) {
-                    console.log(player.position.y + j + 1, i);
+      }
+    }
+    return false;
+  };
 
-                    if (
-                        player.tetrimino.shape[j][i - player.position.x] ===
-                            1 &&
-                        board[player.position.y + j + 1][i].type ===
-                            'tetrimino-block'
-                    ) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    };
-
-    const isEnoughSpace = (): boolean => {
-        return true;
-    };
-
-    const handleRotateTetromino = (e: KeyboardEvent): void => {
-        switch (e.code) {
-            case Key.UP:
-                break;
-            case Key.DOWN:
-                drop();
-                break;
-            case Key.LEFT:
-                setPlayer((player) => ({
-                    ...player,
-                    position: {
-                        ...player.position,
-                        x: player.position.x == 0 ? 0 : player.position.x - 1,
-                    },
-                }));
-                // Handle if collison with cell type tetromino-block
-                break;
-            case Key.RIGHT:
-                setPlayer((player) => {
-                    return {
-                        ...player,
-                        position: {
-                            ...player.position,
-                            x:
-                                player.position.x +
-                                    (player.tetrimino.shape[0].length - 1) ==
-                                COL - 1
-                                    ? player.position.x
-                                    : player.position.x + 1,
-                        },
-                    };
-                });
-                break;
-            case Key.SPACE:
-                //
-                break;
-            default:
-                break;
-        }
-    };
-
-    return { player, drop, isCollison, createNewPlayer, handleRotateTetromino };
+  return { player, drop, isColliding, createNewPlayer, rotateAndMoveTetromino };
 };
