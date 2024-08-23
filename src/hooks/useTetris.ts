@@ -27,7 +27,7 @@ const useTetris = () => {
   const [board, setBoard] = useState<Cell[][]>(createInitialBoard());
   const [lines, setLines] = useState(0);
   const [points, setPoints] = useState(0);
-  const [level, setLevel] = useState(1);
+  const [level, setLevel] = useState(0);
 
   useEffect(() => {
     setPoints(lines * 100);

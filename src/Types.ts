@@ -73,14 +73,20 @@ export const TETROMINOS: Record<TetrominoShape, Tetromino> = {
   },
 };
 
+export const randomTetrominos = (): Tetromino[] => {
+  const tetrominos = Object.keys(TETROMINOS) as TetrominoShape[];
+  return tetrominos
+    .sort(() => Math.random() - 0.5)
+    .map((tetro) => TETROMINOS[tetro]);
+};
 export const randomTetromino = (): Tetromino => {
   const tetrominos = Object.keys(TETROMINOS) as TetrominoShape[];
   const randomIndex = Math.floor(Math.random() * tetrominos.length);
-  console.log(tetrominos[randomIndex]);
   return TETROMINOS[tetrominos[randomIndex]];
 };
 
 export type Player = {
   position: { x: number; y: number };
   tetromino: Tetromino;
+  nextTetrominos: Tetromino[];
 };

@@ -1,21 +1,30 @@
-import { CELL_SIZE, DEFAULT_CELL_COLOR, Player } from '../Types';
+import { useMemo } from 'react';
+import { CELL_SIZE, DEFAULT_CELL_COLOR, Position, Tetromino } from '../Types';
 import CellItem from './Cell';
 
 type Props = {
-  player: Player;
+  player: { position: Position; tetromino: Tetromino };
+  className?: string;
+  isPreviewBlock?: boolean;
 };
 
-const TetrominoBlock: React.FC<Props> = ({ player }) => {
+const TetrominoBlock: React.FC<Props> = ({
+  player,
+  className = '',
+  isPreviewBlock = false,
+}) => {
   const { position, tetromino } = player;
+  const style = useMemo(() => {
+    return isPreviewBlock
+      ? {}
+      : {
+          top: position.y * CELL_SIZE,
+          left: position.x * CELL_SIZE,
+        };
+  }, [position, isPreviewBlock]);
 
   return (
-    <div
-      className="absolute z-10"
-      style={{
-        top: position.y * CELL_SIZE,
-        left: position.x * CELL_SIZE,
-      }}
-    >
+    <div className={`absolute z-10 ${className}`} style={style}>
       {tetromino.shape.map((row, rowIndex) => (
         <div key={rowIndex} className="flex shrink-0">
           {row.map((cell, cellIndex) => {
@@ -30,6 +39,7 @@ const TetrominoBlock: React.FC<Props> = ({ player }) => {
                   type: isVisible ? 'tetromino-block' : 'cell',
                 }}
                 className={isVisible ? '' : 'opacity-0'}
+                isPreviewBlock={isPreviewBlock}
               />
             );
           })}

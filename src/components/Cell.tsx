@@ -4,17 +4,18 @@ import tinycolor from 'tinycolor2';
 type Props = {
   cell: Cell;
   className?: string;
+  isPreviewBlock?: boolean;
 };
 
-const CellItem = ({ cell, className = '' }: Props) => {
+const CellItem = ({ cell, className = '', isPreviewBlock = false }: Props) => {
   return (
     <div
       data-type={cell.type}
       className={`shrink-0  ${className}`}
       style={{
         backgroundColor: cell.color,
-        width: CELL_SIZE,
-        height: CELL_SIZE,
+        width: isPreviewBlock ? Math.floor(CELL_SIZE * 0.8) : CELL_SIZE,
+        height: isPreviewBlock ? Math.floor(CELL_SIZE * 0.8) : CELL_SIZE,
       }}
     >
       {cell.type === 'tetromino-block' && (
