@@ -24,7 +24,7 @@ export const TETROMINOS: Record<TetrominoShape, Tetromino> = {
       [1, 1, 1, 1],
       [0, 0, 0, 0],
     ],
-    color: '#00EEFF',
+    color: '#CCFFFF',
   },
   L: {
     shape: [

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { COL, DEFAULT_CELL_COLOR, Player, ROW } from '../helpers/Types';
+import { COL, DEFAULT_CELL_COLOR, Player, ROW } from '../Types';
 
 export type Cell = {
   x: number;
@@ -8,76 +8,72 @@ export type Cell = {
   type: 'cell' | 'tetromino-block';
 };
 
-const initBoard: Cell[][] = [];
-for (let i = 0; i < ROW; i++) {
-  const rowCells: Cell[] = [];
-  for (let j = 0; j < COL; j++) {
-    const cell: Cell = {
-      x: i,
-      y: j,
-      color: DEFAULT_CELL_COLOR,
-      type: 'cell',
-    };
-    rowCells.push(cell);
-  }
-  initBoard.push(rowCells);
-}
+const createInitialBoard = (): Cell[][] => {
+  return Array(ROW)
+    .fill(null)
+    .map((_, i) =>
+      Array(COL)
+        .fill(null)
+        .map((_, j) => ({
+          x: j,
+          y: i,
+          color: DEFAULT_CELL_COLOR,
+          type: 'cell',
+        }))
+    );
+};
 
 const useTetris = () => {
-  const [board, setBoard] = useState<Cell[][]>(initBoard);
+  const [board, setBoard] = useState<Cell[][]>(createInitialBoard());
+  const [lines, setLines] = useState<number>(0);
 
-  const handleCollison = (player: Player): void => {
-    const shape_x_l = player.tetromino.shape[0].length;
-    const shape_y_l = player.tetromino.shape.length;
+  const handleCollision = (player: Player): void => {
+    const { shape, color } = player.tetromino;
+    const { x: posX, y: posY } = player.position;
 
-    setBoard((board) => {
-      return board.map((row, rowIndex) => {
-        return row.map((cell, cellIndex) => {
-          const pos_y = rowIndex - player.position.y;
-          const pos_x = cellIndex - player.position.x;
-          if (pos_x >= 0 && pos_y >= 0 && pos_x <= shape_x_l - 1 && pos_y <= shape_y_l - 1) {
-            if (player.tetromino.shape[pos_y][pos_x] === 1)
-              return {
-                ...cell,
-                color: player.tetromino.color,
-                type: 'tetromino-block',
-              };
+    setBoard((prevBoard) =>
+      prevBoard.map((row, y) =>
+        row.map((cell, x) => {
+          const shapeY = y - posY;
+          const shapeX = x - posX;
+          if (
+            shapeY >= 0 &&
+            shapeY < shape.length &&
+            shapeX >= 0 &&
+            shapeX < shape[0].length &&
+            shape[shapeY][shapeX] === 1
+          ) {
+            return { ...cell, color, type: 'tetromino-block' };
           }
-
           return cell;
-        });
-      });
-    });
+        })
+      )
+    );
   };
 
   const removeCompletedLines = (): void => {
     setBoard((prevBoard) => {
       const newBoard = prevBoard.filter((row) => !row.every((cell) => cell.type === 'tetromino-block'));
       const removedLines = ROW - newBoard.length;
-
+      setLines((prev) => (prev += removedLines));
       const newRows = Array(removedLines)
         .fill(null)
         .map(() =>
           Array(COL)
             .fill(null)
             .map(() => ({
+              x: 0,
               y: 0,
               color: DEFAULT_CELL_COLOR,
               type: 'cell' as const,
             }))
         );
 
-      return [...newRows, ...newBoard].map((row, rowIndex) =>
-        row.map((cell, cellIndex) => ({
-          ...cell,
-          x: cellIndex,
-          y: rowIndex,
-        }))
-      );
+      return [...newRows, ...newBoard].map((row, y) => row.map((cell, x) => ({ ...cell, x, y })));
     });
   };
 
-  return { board, handleCollison, removeCompletedLines };
+  return { board, lines, handleCollision, removeCompletedLines };
 };
 
 export default useTetris;

@@ -1,4 +1,4 @@
-import { CELL_SIZE } from '../helpers/Types';
+import { CELL_SIZE } from '../Types';
 import { Cell } from '../hooks/useTetris';
 
 type Props = {
@@ -21,7 +21,7 @@ const CellItem = ({ cell, className = '' }: Props) => {
     >
       {cell.type === 'tetromino-block' && (
         <div
-          className="shrink-0 border border-gray-200 shadow-lg"
+          className="shrink-0 border border-gray-200 shadow-xl"
           style={{
             width: CELL_SIZE * 0.7,
             height: CELL_SIZE * 0.7,
