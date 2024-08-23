@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { COL, Player, randomTetromino, ROW, Tetromino } from '../Types';
+import {
+  COL,
+  DEFAULT_PLAYER_POSITION,
+  Player,
+  Position,
+  randomTetromino,
+  ROW,
+  Tetromino,
+} from '../Types';
 import { Cell } from './useTetris';
 
 enum Key {
@@ -38,10 +46,6 @@ export const usePlayer = () => {
     setPlayer(() => createPlayer());
   };
 
-  const isCreateNewPlayer = (board: Cell[][]): boolean => {
-    // for (let i = 0; i < )
-  };
-
   const isColliding = (board: Cell[][]): boolean => {
     return isCollision(
       board,
@@ -58,23 +62,33 @@ export const usePlayer = () => {
     }));
   };
 
-  const hardDrop = (board: Cell[][]): void => {
+  const fastDrop = (
+    board: Cell[][],
+    handleCollision: (player: Player) => void
+  ): void => {
     const { shape } = player.tetromino;
     let newY = player.position.y;
 
     while (!isCollision(board, { ...player.position, y: newY + 1 }, shape)) {
       newY++;
     }
-    setPlayer((prev) => ({ ...prev, position: { ...prev.position, y: newY } }));
+    const newPlayer = { ...player, position: { ...player.position, y: newY } };
+    setPlayer(newPlayer);
+    handleCollision(newPlayer);
+    createNewPlayer();
   };
 
-  const rotateAndMoveTetromino = (e: KeyboardEvent, board: Cell[][]): void => {
+  const rotateAndMoveTetromino = (
+    e: React.KeyboardEvent,
+    board: Cell[][],
+    handleCollision: (player: Player) => void
+  ): void => {
     switch (e.code) {
       case Key.UP:
         rotate();
         break;
       case Key.DOWN:
-        if (player.position.y < ROW) drop();
+        if (!isColliding(board)) drop();
         break;
       case Key.LEFT:
         moveHorizontally(-1, board);
@@ -83,7 +97,7 @@ export const usePlayer = () => {
         moveHorizontally(1, board);
         break;
       case Key.SPACE:
-        hardDrop(board);
+        fastDrop(board, handleCollision);
         break;
     }
   };
@@ -153,7 +167,7 @@ export const usePlayer = () => {
 
   const isCollision = (
     board: Cell[][],
-    position: { x: number; y: number },
+    position: Position,
     shape: number[][]
   ): boolean => {
     for (let y = 0; y < shape.length; y++) {
@@ -175,6 +189,30 @@ export const usePlayer = () => {
     return false;
   };
 
+  const isCreateNewPlayer = (board: Cell[][]): boolean => {
+    if (
+      isValidMove(
+        player.position.x,
+        DEFAULT_PLAYER_POSITION.y,
+        player.tetromino.shape,
+        board
+      )
+    )
+      return true;
+    return false;
+  };
+
+  const getShadowPlayerPosition = (board: Cell[][]): Position => {
+    const { x, y } = player.position;
+    const { shape } = player.tetromino;
+
+    let i = y;
+    while (isValidMove(x, i + 1, shape, board)) {
+      i++;
+    }
+    return { x, y: i };
+  };
+
   return {
     player,
     drop,
@@ -182,5 +220,7 @@ export const usePlayer = () => {
     isColliding,
     createNewPlayer,
     rotateAndMoveTetromino,
+    isCreateNewPlayer,
+    getShadowPlayerPosition,
   };
 };

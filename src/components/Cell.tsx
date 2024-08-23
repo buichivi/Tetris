@@ -1,6 +1,6 @@
 import { CELL_SIZE } from '../Types';
 import { Cell } from '../hooks/useTetris';
-
+import tinycolor from 'tinycolor2';
 type Props = {
   cell: Cell;
   className?: string;
@@ -10,9 +10,7 @@ const CellItem = ({ cell, className = '' }: Props) => {
   return (
     <div
       data-type={cell.type}
-      className={`shrink-0 border-r border-b ${
-        cell.type !== 'tetromino-block' ? `border-gray-500` : `border-gray-200`
-      }  ${className} flex items-center justify-center drop-shadow-md`}
+      className={`shrink-0  ${className}`}
       style={{
         backgroundColor: cell.color,
         width: CELL_SIZE,
@@ -21,11 +19,13 @@ const CellItem = ({ cell, className = '' }: Props) => {
     >
       {cell.type === 'tetromino-block' && (
         <div
-          className="shrink-0 border border-gray-200 shadow-xl"
+          className="size-full border-4"
           style={{
-            width: CELL_SIZE * 0.7,
-            height: CELL_SIZE * 0.7,
             backgroundColor: cell.color,
+            borderTopColor: tinycolor(cell.color).lighten(10).toString(),
+            borderLeftColor: tinycolor(cell.color).darken(10).toString(),
+            borderRightColor: tinycolor(cell.color).darken(10).toString(),
+            borderBottomColor: tinycolor(cell.color).darken(20).toString(),
           }}
         ></div>
       )}

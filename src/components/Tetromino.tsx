@@ -10,7 +10,7 @@ const TetrominoBlock: React.FC<Props> = ({ player }) => {
 
   return (
     <div
-      className="absolute"
+      className="absolute z-10"
       style={{
         top: position.y * CELL_SIZE,
         left: position.x * CELL_SIZE,

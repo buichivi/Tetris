@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { COL, DEFAULT_CELL_COLOR, Player, ROW } from '../Types';
 
 export type Cell = {
@@ -25,7 +25,15 @@ const createInitialBoard = (): Cell[][] => {
 
 const useTetris = () => {
   const [board, setBoard] = useState<Cell[][]>(createInitialBoard());
-  const [lines, setLines] = useState<number>(0);
+  const [lines, setLines] = useState(0);
+  const [points, setPoints] = useState(0);
+  const [level, setLevel] = useState(1);
+
+  useEffect(() => {
+    setPoints(lines * 100);
+    setLevel(Math.floor(points / 1000) + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lines]);
 
   const handleCollision = (player: Player): void => {
     const { shape, color } = player.tetromino;
@@ -49,11 +57,14 @@ const useTetris = () => {
         })
       )
     );
+    removeCompletedLines();
   };
 
   const removeCompletedLines = (): void => {
     setBoard((prevBoard) => {
-      const newBoard = prevBoard.filter((row) => !row.every((cell) => cell.type === 'tetromino-block'));
+      const newBoard = prevBoard.filter(
+        (row) => !row.every((cell) => cell.type === 'tetromino-block')
+      );
       const removedLines = ROW - newBoard.length;
       setLines((prev) => (prev += removedLines));
       const newRows = Array(removedLines)
@@ -69,11 +80,13 @@ const useTetris = () => {
             }))
         );
 
-      return [...newRows, ...newBoard].map((row, y) => row.map((cell, x) => ({ ...cell, x, y })));
+      return [...newRows, ...newBoard].map((row, y) =>
+        row.map((cell, x) => ({ ...cell, x, y }))
+      );
     });
   };
 
-  return { board, lines, handleCollision, removeCompletedLines };
+  return { points, level, board, lines, handleCollision, removeCompletedLines };
 };
 
 export default useTetris;

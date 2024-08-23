@@ -1,4 +1,4 @@
-import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import CellItem from './Cell';
 import useTetris from '../hooks/useTetris';
 import TetrominoBlock from './Tetromino';
@@ -6,46 +6,43 @@ import { usePlayer } from '../hooks/usePlayer';
 import useInterval from '../hooks/useInterval';
 import TetrominoShadow from './TetrominoShadow';
 
-const TetrisBoard = (): ReactElement => {
-  const { board, lines, handleCollision, removeCompletedLines } = useTetris();
-  const { player, createNewPlayer, drop, isColliding, rotateAndMoveTetromino } =
-    usePlayer();
-  const [isPlaying, setIsPlaying] = useState(false);
+type Props = {
+  isGameOver: boolean;
+  resetGameOver: () => void;
+};
+
+const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
+  const { points, level, board, lines, handleCollision } = useTetris();
+  const {
+    player,
+    createNewPlayer,
+    drop,
+    isColliding,
+    rotateAndMoveTetromino,
+    isCreateNewPlayer,
+    getShadowPlayerPosition,
+  } = usePlayer();
 
   useInterval(() => {
-    if (isPlaying) {
+    if (!isGameOver) {
       drop();
+      if (isColliding(board)) {
+        handleCollision(player);
+        createNewPlayer();
+        if (!isCreateNewPlayer(board)) resetGameOver();
+      }
     }
-  }, 1000);
-
-  useEffect(() => {
-    if (isColliding(board)) {
-      createNewPlayer();
-      handleCollision(player);
-      removeCompletedLines();
-    }
-  }, [
-    player,
-    board,
-    createNewPlayer,
-    handleCollision,
-    isColliding,
-    removeCompletedLines,
-  ]);
+  }, 1500);
 
   const handleChangeTetromino = useCallback(
-    (e: KeyboardEvent) => isPlaying && rotateAndMoveTetromino(e, board),
-    [isPlaying, board, rotateAndMoveTetromino]
+    (e: React.KeyboardEvent) =>
+      !isGameOver && rotateAndMoveTetromino(e, board, handleCollision),
+    [isGameOver, board, rotateAndMoveTetromino, handleCollision]
   );
 
-  useEffect(() => {
-    window.addEventListener('keydown', handleChangeTetromino);
-    return () => window.removeEventListener('keydown', handleChangeTetromino);
-  }, [handleChangeTetromino]);
-
-  const pauseGame = () => {
-    setIsPlaying(!isPlaying);
-  };
+  const shadowPosition: { x: number; y: number } = useMemo(() => {
+    return getShadowPlayerPosition(board);
+  }, [board, getShadowPlayerPosition]);
 
   const memoizedBoard = useMemo(
     () =>
@@ -66,20 +63,25 @@ const TetrisBoard = (): ReactElement => {
         <div>Lines {lines}</div>
       </div>
       <div className="w-1/2 h-full overflow-hidden flex flex-col justify-end">
-        <div className="w-fit h-fit shrink-0 border-l border-t border-gray-500  relative flex flex-col overflow-hidden">
+        <div className="w-fit h-fit shrink-0 border relative flex flex-col overflow-hidden">
           {memoizedBoard}
           <TetrominoBlock player={player} />
-          <TetrominoShadow player={player} board={board} />
+          <TetrominoShadow player={player} shadowPosition={shadowPosition} />
         </div>
       </div>
       <div>
-        <button
-          onClick={pauseGame}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-        >
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
+        <div className="flex flex-col justify-start">
+          <div>Level: {level}</div>
+          <div></div>
+          <div>Points: {points}</div>
+        </div>
       </div>
+      <input
+        type="text"
+        className="opacity-0 absolute"
+        autoFocus
+        onKeyDown={handleChangeTetromino}
+      />
     </div>
   );
 };
