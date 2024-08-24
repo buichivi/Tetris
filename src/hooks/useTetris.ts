@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react';
-import { COL, DEFAULT_CELL_COLOR, Player, ROW } from '../Types';
-
-export type Cell = {
-  x: number;
-  y: number;
-  color: string;
-  type: 'cell' | 'tetromino-block';
-};
+import { Cell, COL, DEFAULT_CELL_COLOR, Player, ROW } from '../Types';
 
 const createInitialBoard = (): Cell[][] => {
   return Array(ROW)
@@ -28,6 +21,7 @@ const useTetris = () => {
   const [lines, setLines] = useState(0);
   const [points, setPoints] = useState(0);
   const [level, setLevel] = useState(0);
+  const [isRemovingLines, setRemovingLines] = useState(0);
 
   useEffect(() => {
     setPoints(lines * 100);
@@ -67,6 +61,12 @@ const useTetris = () => {
       );
       const removedLines = ROW - newBoard.length;
       setLines((prev) => (prev += removedLines));
+      if (removedLines > 0) {
+        setRemovingLines(removedLines);
+        setTimeout(() => {
+          setRemovingLines(0);
+        }, 150);
+      }
       const newRows = Array(removedLines)
         .fill(null)
         .map(() =>
@@ -86,7 +86,15 @@ const useTetris = () => {
     });
   };
 
-  return { points, level, board, lines, handleCollision, removeCompletedLines };
+  return {
+    points,
+    level,
+    board,
+    lines,
+    handleCollision,
+    removeCompletedLines,
+    isRemovingLines,
+  };
 };
 
 export default useTetris;

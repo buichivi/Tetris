@@ -12,3 +12,21 @@ body {
   font-style: normal;
   font-variation-settings: 'wdth' 100;
 }
+
+@keyframes appearingMessage {
+  0% {
+    font-weight: 400;
+    letter-spacing: normal;
+    opacity: 0;
+  }
+  50% {
+    font-weight: 500;
+    letter-spacing: 8px;
+    opacity: 1;
+  }
+  100% {
+    font-weight: 500;
+    letter-spacing: 12px;
+    opacity: 0;
+  }
+}

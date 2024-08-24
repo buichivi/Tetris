@@ -89,4 +89,14 @@ export type Player = {
   position: { x: number; y: number };
   tetromino: Tetromino;
   nextTetrominos: Tetromino[];
+  holdTetromino: Tetromino | null;
 };
+
+export type Cell = {
+  x: number;
+  y: number;
+  color: string;
+  type: 'cell' | 'tetromino-block';
+};
+
+export const RemoveMessages = ['', 'Single', 'Double', 'Triple', 'Quad'];

@@ -1,5 +1,4 @@
-import { CELL_SIZE } from '../Types';
-import { Cell } from '../hooks/useTetris';
+import { Cell, CELL_SIZE } from '../Types';
 import tinycolor from 'tinycolor2';
 type Props = {
   cell: Cell;

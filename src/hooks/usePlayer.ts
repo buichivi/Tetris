@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Cell,
   COL,
   DEFAULT_PLAYER_POSITION,
   Player,
@@ -8,7 +9,6 @@ import {
   ROW,
   Tetromino,
 } from '../Types';
-import { Cell } from './useTetris';
 
 enum Key {
   UP = 'ArrowUp',
@@ -16,24 +16,32 @@ enum Key {
   LEFT = 'ArrowLeft',
   RIGHT = 'ArrowRight',
   SPACE = 'Space',
+  SHIFTLEFT = 'ShiftLeft',
+  SHIFTRIGHT = 'ShiftRight',
 }
 
-const createPlayer = (): Player => {
+const initPlayer = (): Player => {
   const tetrominos: Tetromino[] = randomTetrominos();
   return {
     position: DEFAULT_PLAYER_POSITION,
     tetromino: tetrominos.shift() as Tetromino,
     nextTetrominos: tetrominos,
+    holdTetromino: null,
   };
 };
 
 export const usePlayer = () => {
-  const [player, setPlayer] = useState<Player>(createPlayer);
+  const [player, setPlayer] = useState<Player>(initPlayer);
   const [frames] = useState(48);
+  const [isFastDroping, setIsFastDroping] = useState(false);
+  const [isHoldingKey, setIsHoldingKey] = useState(false);
+  const [startHoldingKey, setStartHoldingKey] = useState(0);
+  // const [holdTetromino, setHoldTetromino] = useState(null);
 
   const calcDropTime = (level: number): number => {
     return (frames - level * 5) / 60;
   };
+
   const drop = (): void => {
     setPlayer((prevPlayer) => ({
       ...prevPlayer,
@@ -48,6 +56,7 @@ export const usePlayer = () => {
         position: DEFAULT_PLAYER_POSITION,
         tetromino: tetrominos.shift() as Tetromino,
         nextTetrominos: [],
+        holdTetromino: prevPlayer.holdTetromino,
       };
       if (tetrominos.length <= 5) {
         newPlayer.nextTetrominos = [...tetrominos, ...randomTetrominos()];
@@ -86,6 +95,10 @@ export const usePlayer = () => {
     setPlayer(newPlayer);
     handleCollision(newPlayer);
     createNewPlayer();
+    setIsFastDroping(true);
+    setTimeout(() => {
+      setIsFastDroping(false);
+    }, 150);
   };
 
   const rotateAndMoveTetromino = (
@@ -109,6 +122,25 @@ export const usePlayer = () => {
       case Key.SPACE:
         fastDrop(board, handleCollision);
         break;
+      case Key.SHIFTLEFT:
+      case Key.SHIFTRIGHT:
+        if (!player.holdTetromino) holdingTetromino();
+        else switchingTetromino();
+        break;
+    }
+    if (e.code === Key.LEFT || e.code === Key.RIGHT) {
+      if (startHoldingKey == 0) setStartHoldingKey(() => new Date().getTime());
+      else {
+        const now = new Date().getTime();
+        if (now - startHoldingKey >= 150) setIsHoldingKey(true);
+      }
+    }
+  };
+
+  const onReleaseKey = (e: React.KeyboardEvent) => {
+    if (e.code === Key.LEFT || e.code === Key.RIGHT) {
+      setIsHoldingKey(false);
+      setStartHoldingKey(0);
     }
   };
 
@@ -242,15 +274,47 @@ export const usePlayer = () => {
     return { x, y: i };
   };
 
+  const holdingTetromino = (): void => {
+    setPlayer((prevPlayer) => {
+      const tetrominos = prevPlayer.nextTetrominos;
+      const holdTetromino = prevPlayer.tetromino;
+      const tetromino = tetrominos.shift() as Tetromino;
+      const newPlayer: Player = {
+        position: prevPlayer.position,
+        tetromino,
+        holdTetromino,
+        nextTetrominos: [],
+      };
+      if (tetrominos.length <= 5) {
+        newPlayer.nextTetrominos = [...tetrominos, ...randomTetrominos()];
+      } else newPlayer.nextTetrominos = tetrominos;
+      return newPlayer;
+    });
+  };
+
+  const switchingTetromino = () => {
+    setPlayer((prevPlayer) => {
+      const holdTetromino = prevPlayer.holdTetromino as Tetromino;
+      const tetromino = prevPlayer.tetromino;
+      return {
+        ...prevPlayer,
+        tetromino: holdTetromino,
+        holdTetromino: tetromino,
+      };
+    });
+  };
+
   return {
     player,
     drop,
-    isValidMove,
     isColliding,
     createNewPlayer,
     rotateAndMoveTetromino,
     isCreateNewPlayer,
     getShadowPlayerPosition,
     calcDropTime,
+    isFastDroping,
+    onReleaseKey,
+    isHoldingKey,
   };
 };
