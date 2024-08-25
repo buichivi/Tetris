@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Cell, COL, DEFAULT_CELL_COLOR, Player, ROW } from '../Types';
+import { Cell, COL, DEFAULT_CELL_COLOR, Player, ROW, SFX } from '../Types';
 
 const createInitialBoard = (): Cell[][] => {
   return Array(ROW)
@@ -15,6 +15,8 @@ const createInitialBoard = (): Cell[][] => {
         }))
     );
 };
+
+const sfx = new SFX();
 
 const useTetris = () => {
   const [board, setBoard] = useState<Cell[][]>(createInitialBoard());
@@ -32,6 +34,8 @@ const useTetris = () => {
   const handleCollision = (player: Player): void => {
     const { shape, color } = player.tetromino;
     const { x: posX, y: posY } = player.position;
+
+    sfx.hit();
 
     setBoard((prevBoard) =>
       prevBoard.map((row, y) =>
@@ -62,6 +66,15 @@ const useTetris = () => {
       const removedLines = ROW - newBoard.length;
       setLines((prev) => (prev += removedLines));
       if (removedLines > 0) {
+        if (removedLines === 1) {
+          sfx.combo_1();
+        } else if (removedLines === 2) {
+          sfx.combo_2();
+        } else if (removedLines === 3) {
+          sfx.combo_3();
+        } else if (removedLines === 4) {
+          sfx.combo_4();
+        }
         setRemovingLines(removedLines);
         setTimeout(() => {
           setRemovingLines(0);

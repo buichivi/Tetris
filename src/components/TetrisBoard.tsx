@@ -6,10 +6,38 @@ import { usePlayer } from '../hooks/usePlayer';
 import useInterval from '../hooks/useInterval';
 import TetrominoShadow from './TetrominoShadow';
 import { CELL_SIZE, COL, RemoveMessages, ROW } from '../Types';
+import Instruction from './Instruction';
 
 type Props = {
   isGameOver: boolean;
   resetGameOver: () => void;
+};
+const bgMusic = new Audio('src/assets/You have no enemies.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.8;
+const getPreviewTetrominoShape = (shape: number[][]): number[][] => {
+  // Remove fake rows (all elements in a row are 0)
+  const rowFiltered = shape.filter((row) => row.some((cell) => cell !== 0));
+
+  // Find the leftmost and rightmost non-zero columns
+  let leftmostCol = rowFiltered[0].length;
+  let rightmostCol = 0;
+
+  for (let i = 0; i < rowFiltered.length; i++) {
+    for (let j = 0; j < rowFiltered[i].length; j++) {
+      if (rowFiltered[i][j] !== 0) {
+        leftmostCol = Math.min(leftmostCol, j);
+        rightmostCol = Math.max(rightmostCol, j);
+      }
+    }
+  }
+
+  // Remove fake columns (all elements in a column are 0)
+  const finalShape = rowFiltered.map((row) =>
+    row.slice(leftmostCol, rightmostCol + 1)
+  );
+
+  return finalShape;
 };
 
 const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
@@ -30,9 +58,10 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
   } = usePlayer();
   const [isCollision, setIsCollision] = useState(false);
   const [removingLines, setRemovingLines] = useState(0);
+  const [isFocusing, setIsFocusing] = useState(false);
 
   useInterval(() => {
-    if (!isGameOver) {
+    if (!isGameOver && isFocusing) {
       drop();
       if (isColliding(board)) {
         handleCollision(player);
@@ -45,6 +74,15 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
       }
     }
   }, calcDropTime(level) * 1000);
+
+  useEffect(() => {
+    if (!isGameOver && isFocusing) {
+      bgMusic.play();
+    } else if (isGameOver) {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+    }
+  }, [isGameOver, isFocusing]);
 
   const handleChangeTetromino = useCallback(
     (e: React.KeyboardEvent) =>
@@ -100,7 +138,7 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
         style={{ height: ROW * CELL_SIZE }}
       >
         <span
-          className={`absolute top-40 right-0 text-3xl ${
+          className={`absolute top-40 right-2 text-2xl ${
             removingLines &&
             '[animation:appearingMessage_ease-out_3s_alternate]'
           } uppercase`}
@@ -118,9 +156,7 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
                   position: { x: 0, y: 0 },
                   tetromino: {
                     ...player.holdTetromino,
-                    shape: player.holdTetromino.shape.filter((row) =>
-                      row.some((cell) => cell === 1)
-                    ),
+                    shape: getPreviewTetrominoShape(player.holdTetromino.shape),
                   },
                 }}
                 isPreviewBlock={true}
@@ -131,13 +167,13 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
         </div>
         <div className="flex flex-col justify-end flex-1 items-end pr-2">
           <div className="*:block text-right">
-            <span className="uppercase tracking-widest font-semibold">
+            <span className="uppercase text-sm tracking-widest font-semibold">
               Level
             </span>
             <span className="text-4xl">{level}</span>
           </div>
           <div className="*:block text-right">
-            <span className="uppercase tracking-widest font-semibold">
+            <span className="uppercase text-sm tracking-widest font-semibold">
               Points
             </span>
             <span className="text-4xl">{points}</span>
@@ -155,18 +191,16 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
         <h2 className="pl-1 bg-white text-black font-semibold uppercase tracking-wider">
           Next
         </h2>
-        <div className="border-2 bg-[#0000008e] border-l-0 overflow-hidden px-2 py-3 relative before:content-[''] before:translate-x-7 before:translate-y-7 before:rotate-45 before:absolute before:z-10 before:bottom-0 before:right-0 before:size-10 before:bg-black before:border-l-2 before:border-l-white [clip-path:polygon(0_0,100%_0,100%_96.3%,88.5%_100%,0_100%,0%_50%)]">
+        <div className="border-2 bg-[#0000008e] border-l-0 overflow-hidden px-2 py-3 relative before:content-[''] before:translate-x-7 before:translate-y-7 before:rotate-45 before:absolute before:z-10 before:bottom-0 before:right-0 before:size-10 before:bg-black before:border-l-2 before:border-l-white [clip-path:polygon(0_0,100%_0,100%_96.3%,89.8%_100%,0_100%,0%_50%)]">
           {player.nextTetrominos.slice(0, 5).map((tetromino, index) => {
             return (
-              <div className="w-24 h-16 relative flex flex-col" key={index}>
+              <div className="w-28 h-16 relative flex flex-col" key={index}>
                 <TetrominoBlock
                   player={{
                     position: { x: 0, y: 0 },
                     tetromino: {
                       ...tetromino,
-                      shape: tetromino.shape.filter((row) =>
-                        row.some((cell) => cell === 1)
-                      ),
+                      shape: getPreviewTetrominoShape(tetromino.shape),
                     },
                   }}
                   isPreviewBlock={true}
@@ -176,6 +210,9 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
             );
           })}
         </div>
+        <div>
+          <Instruction />
+        </div>
       </div>
       <input
         type="text"
@@ -184,6 +221,8 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
         autoFocus
         onKeyDown={handleChangeTetromino}
         onKeyUp={onReleaseKey}
+        onFocus={() => setIsFocusing(true)}
+        onBlur={() => setIsFocusing(false)}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import {
   ROW,
   Tetromino,
 } from '../Types';
+import { SFX } from '../Types';
 
 enum Key {
   UP = 'ArrowUp',
@@ -19,6 +20,8 @@ enum Key {
   SHIFTLEFT = 'ShiftLeft',
   SHIFTRIGHT = 'ShiftRight',
 }
+
+const sfx = new SFX();
 
 const initPlayer = (): Player => {
   const tetrominos: Tetromino[] = randomTetrominos();
@@ -32,7 +35,7 @@ const initPlayer = (): Player => {
 
 export const usePlayer = () => {
   const [player, setPlayer] = useState<Player>(initPlayer);
-  const [frames] = useState(48);
+  const [frames] = useState(60);
   const [isFastDroping, setIsFastDroping] = useState(false);
   const [isHoldingKey, setIsHoldingKey] = useState(false);
   const [startHoldingKey, setStartHoldingKey] = useState(0);
@@ -108,9 +111,11 @@ export const usePlayer = () => {
   ): void => {
     switch (e.code) {
       case Key.UP:
+        sfx.rotate();
         rotate(board);
         break;
       case Key.DOWN:
+        sfx.move();
         if (!isColliding(board)) drop();
         break;
       case Key.LEFT:
@@ -120,10 +125,12 @@ export const usePlayer = () => {
         moveHorizontally(1, board);
         break;
       case Key.SPACE:
+        sfx.harddrop();
         fastDrop(board, handleCollision);
         break;
       case Key.SHIFTLEFT:
       case Key.SHIFTRIGHT:
+        sfx.hold();
         if (!player.holdTetromino) holdingTetromino();
         else switchingTetromino();
         break;
@@ -145,6 +152,7 @@ export const usePlayer = () => {
   };
 
   const moveHorizontally = (direction: 1 | -1, board: Cell[][]): void => {
+    sfx.move();
     setPlayer((prevPlayer) => {
       const newX = prevPlayer.position.x + direction;
       if (
