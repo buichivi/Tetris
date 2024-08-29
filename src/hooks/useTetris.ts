@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { Cell, COL, DEFAULT_CELL_COLOR, Player, ROW } from "../types/Types";
-import gameAudio from "../types/Audio";
+import { useEffect, useState } from 'react';
+import { Cell, COL, DEFAULT_CELL_COLOR, Player, ROW } from '../types/Types';
+import gameAudio from '../types/Audio';
 
 const createInitialBoard = (): Cell[][] => {
   return Array(ROW)
@@ -12,7 +12,7 @@ const createInitialBoard = (): Cell[][] => {
           x: j,
           y: i,
           color: DEFAULT_CELL_COLOR,
-          type: "cell",
+          type: 'cell',
         }))
     );
 };
@@ -26,15 +26,16 @@ const useTetris = () => {
 
   useEffect(() => {
     setPoints(lines * 100);
-    setLevel(Math.floor(points / 1000) + 1);
+    setLevel(Math.floor(points / 900) + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lines]);
 
-  const handleCollision = (player: Player): void => {
+  const handleCollision = (player: Player | undefined): void => {
+    if (!player) return;
     const { shape, color } = player.tetromino;
     const { x: posX, y: posY } = player.position;
 
-    gameAudio.playSFX("hit");
+    gameAudio.playSFX('hit');
 
     setBoard((prevBoard) =>
       prevBoard.map((row, y) =>
@@ -48,7 +49,7 @@ const useTetris = () => {
             shapeX < shape[0].length &&
             shape[shapeY][shapeX] === 1
           ) {
-            return { ...cell, color, type: "tetromino-block" };
+            return { ...cell, color, type: 'tetromino-block' };
           }
           return cell;
         })
@@ -59,18 +60,18 @@ const useTetris = () => {
 
   const removeCompletedLines = (): void => {
     setBoard((prevBoard) => {
-      const newBoard = prevBoard.filter((row) => !row.every((cell) => cell.type === "tetromino-block"));
+      const newBoard = prevBoard.filter((row) => !row.every((cell) => cell.type === 'tetromino-block'));
       const removedLines = ROW - newBoard.length;
       setLines((prev) => (prev += removedLines));
       if (removedLines > 0) {
         if (removedLines === 1) {
-          gameAudio.playSFX("combo_1");
+          gameAudio.playSFX('combo_1');
         } else if (removedLines === 2) {
-          gameAudio.playSFX("combo_2");
+          gameAudio.playSFX('combo_2');
         } else if (removedLines === 3) {
-          gameAudio.playSFX("combo_3");
+          gameAudio.playSFX('combo_3');
         } else if (removedLines === 4) {
-          gameAudio.playSFX("combo_4");
+          gameAudio.playSFX('combo_4');
         }
         setRemovingLines(removedLines);
         setTimeout(() => {
@@ -86,7 +87,7 @@ const useTetris = () => {
               x: 0,
               y: 0,
               color: DEFAULT_CELL_COLOR,
-              type: "cell" as const,
+              type: 'cell' as const,
             }))
         );
 

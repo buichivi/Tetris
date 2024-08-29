@@ -1,4 +1,4 @@
-type SoundName =
+export type SoundName =
   | 'move'
   | 'hit'
   | 'rotate'
@@ -35,14 +35,15 @@ type BackgroundMusic = {
 };
 
 export const bgMusicList: BackgroundMusic[] = [
-  { name: 'I have no enemies', src: 'src/assets/musics/You have no enemies.mp3' },
   { name: 'Tetris', src: 'src/assets/musics/Tetris.mp3' },
+  { name: 'I have no enemies', src: 'src/assets/musics/You have no enemies.mp3' },
 ];
 
 interface AudioManager {
   sfxVolume: number;
   bgMusicVolume: number;
   bgMusic: HTMLAudioElement;
+  sfx: HTMLAudioElement;
   playSFX(sfxName: SoundName): void;
   playBgMusic(): void;
   stopBgMusic(): void;
@@ -54,9 +55,10 @@ interface AudioManager {
 
 class GameAudio implements AudioManager {
   private static instance: GameAudio;
-  private _sfxVolume = 0.5;
-  private _bgMusicVolume = 0.5;
+  private _sfxVolume = 1;
+  private _bgMusicVolume = 0.3;
   private _bgMusic = new Audio(bgMusicList[0].src);
+  private _sfx = new Audio();
 
   private constructor() {}
 
@@ -79,11 +81,16 @@ class GameAudio implements AudioManager {
     return this._bgMusic;
   }
 
+  get sfx(): HTMLAudioElement {
+    return this._sfx;
+  }
+
   playSFX(sfxName: SoundName): void {
-    Sounds[sfxName].currentTime = 0;
-    Sounds[sfxName].playbackRate = 1.5;
-    Sounds[sfxName].volume = this._sfxVolume;
-    Sounds[sfxName].play();
+    const audio = Sounds[sfxName];
+    audio.currentTime = 0;
+    audio.playbackRate = 1.5;
+    audio.volume = this._sfxVolume;
+    audio.play().catch((error) => console.error('Error playing sound:', error));
   }
 
   setSFXVolume(vol: number): void {
@@ -102,6 +109,7 @@ class GameAudio implements AudioManager {
 
   playBgMusic(): void {
     this._bgMusic.volume = this._bgMusicVolume;
+    this._bgMusic.loop = true;
     this._bgMusic.play();
   }
 

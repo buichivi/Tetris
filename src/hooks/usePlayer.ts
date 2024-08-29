@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Cell, COL, DEFAULT_PLAYER_POSITION, Player, Position, randomTetrominos, ROW, Tetromino } from '../types/Types';
 import gameAudio from '../types/Audio';
 
@@ -23,57 +23,58 @@ const initPlayer = (): Player => {
 };
 
 export const usePlayer = () => {
-  const [player, setPlayer] = useState<Player>(initPlayer);
+  const [player, setPlayer] = useState<Player | null>(null);
   const [frames] = useState(60);
   const [isFastDroping, setIsFastDroping] = useState(false);
   const [isHoldingKey, setIsHoldingKey] = useState(false);
   const [startHoldingKey, setStartHoldingKey] = useState(0);
-  // const [holdTetromino, setHoldTetromino] = useState(null);
 
-  const calcDropTime = (level: number): number => {
-    return (frames - level * 5) / 60;
-  };
+  useEffect(() => {
+    const id = setTimeout(() => setPlayer(initPlayer()), 4000);
+    return () => clearTimeout(id);
+  }, []);
+
+  const calcDropTime = (level: number): number => (frames - level * 5) / 60;
 
   const drop = (): void => {
-    setPlayer((prevPlayer) => ({
-      ...prevPlayer,
-      position: { ...prevPlayer.position, y: prevPlayer.position.y + 1 },
-    }));
+    setPlayer((prevPlayer) => {
+      if (!prevPlayer) return null;
+      return {
+        ...prevPlayer,
+        position: { ...prevPlayer.position, y: prevPlayer.position.y + 1 },
+      };
+    });
   };
 
   const createNewPlayer = (): void => {
     setPlayer((prevPlayer) => {
+      if (!prevPlayer) return null;
       const tetrominos = prevPlayer.nextTetrominos;
       const newPlayer: Player = {
         position: DEFAULT_PLAYER_POSITION,
         tetromino: tetrominos.shift() as Tetromino,
-        nextTetrominos: [],
+        nextTetrominos: tetrominos.length <= 5 ? [...tetrominos, ...randomTetrominos()] : tetrominos,
         holdTetromino: prevPlayer.holdTetromino,
       };
-      if (tetrominos.length <= 5) {
-        newPlayer.nextTetrominos = [...tetrominos, ...randomTetrominos()];
-      } else newPlayer.nextTetrominos = tetrominos;
       return newPlayer;
     });
   };
 
   const isColliding = (board: Cell[][]): boolean => {
+    if (!player) return false;
     return isCollision(board, { ...player.position, y: player.position.y + 1 }, player.tetromino.shape);
   };
 
   const rotate = (board: Cell[][]): void => {
+    if (!player) return;
     const newTetromino = rotateTetromino(player.tetromino, board);
-    setPlayer((prevPlayer) => ({
-      ...prevPlayer,
-      tetromino: newTetromino,
-    }));
+    setPlayer((prevPlayer) => (prevPlayer ? { ...prevPlayer, tetromino: newTetromino } : null));
   };
 
   const fastDrop = (board: Cell[][], handleCollision: (player: Player) => void): void => {
-    const { shape } = player.tetromino;
+    if (!player) return;
     let newY = player.position.y;
-
-    while (!isCollision(board, { ...player.position, y: newY + 1 }, shape)) {
+    while (!isCollision(board, { ...player.position, y: newY + 1 }, player.tetromino.shape)) {
       newY++;
     }
     const newPlayer = { ...player, position: { ...player.position, y: newY } };
@@ -81,9 +82,7 @@ export const usePlayer = () => {
     handleCollision(newPlayer);
     createNewPlayer();
     setIsFastDroping(true);
-    setTimeout(() => {
-      setIsFastDroping(false);
-    }, 150);
+    setTimeout(() => setIsFastDroping(false), 150);
   };
 
   const rotateAndMoveTetromino = (
@@ -91,6 +90,7 @@ export const usePlayer = () => {
     board: Cell[][],
     handleCollision: (player: Player) => void
   ): void => {
+    if (!player) return;
     switch (e.code) {
       case Key.UP:
         gameAudio.playSFX('rotate');
@@ -113,14 +113,13 @@ export const usePlayer = () => {
       case Key.SHIFTLEFT:
       case Key.SHIFTRIGHT:
         gameAudio.playSFX('hold');
-        if (!player.holdTetromino) holdingTetromino();
-        else switchingTetromino();
+        player.holdTetromino ? switchingTetromino() : holdingTetromino();
         break;
     }
     if (e.code === Key.LEFT || e.code === Key.RIGHT) {
-      if (startHoldingKey == 0) setStartHoldingKey(() => new Date().getTime());
+      if (startHoldingKey === 0) setStartHoldingKey(Date.now());
       else {
-        const now = new Date().getTime();
+        const now = Date.now();
         if (now - startHoldingKey >= 150) setIsHoldingKey(true);
       }
     }
@@ -136,14 +135,11 @@ export const usePlayer = () => {
   const moveHorizontally = (direction: 1 | -1, board: Cell[][]): void => {
     gameAudio.playSFX('move');
     setPlayer((prevPlayer) => {
+      if (!prevPlayer) return null;
       const newX = prevPlayer.position.x + direction;
-      if (isValidMove(newX, prevPlayer.position.y, prevPlayer.tetromino.shape, board)) {
-        return {
-          ...prevPlayer,
-          position: { ...prevPlayer.position, x: newX },
-        };
-      }
-      return prevPlayer;
+      return isValidMove(newX, prevPlayer.position.y, prevPlayer.tetromino.shape, board)
+        ? { ...prevPlayer, position: { ...prevPlayer.position, x: newX } }
+        : prevPlayer;
     });
   };
 
@@ -163,11 +159,11 @@ export const usePlayer = () => {
   };
 
   const rotateTetromino = (tetromino: Tetromino, board: Cell[][]): Tetromino => {
+    if (!player) return tetromino;
     const { x, y } = player.position;
     const newShape = tetromino.shape[0].map((_, colIndex) => tetromino.shape.map((row) => row[colIndex]).reverse());
     const newX = Math.max(0, Math.min(x, COL - newShape[0].length));
 
-    // Check for collisions before applying rotation
     for (let row = 0; row < newShape.length; row++) {
       for (let col = 0; col < newShape[0].length; col++) {
         const posY = Math.min(y + row, ROW - 1);
@@ -176,18 +172,12 @@ export const usePlayer = () => {
           newShape[row][col] === 1 &&
           (posY >= ROW || posX < 0 || posX >= COL || (board[posY] && board[posY][posX].type === 'tetromino-block'))
         ) {
-          // Collision detected, return the original shape without rotating
           return tetromino;
         }
       }
     }
 
-    // No collision, update player position and return new shape
-    setPlayer((prevPlayer) => ({
-      ...prevPlayer,
-      position: { ...prevPlayer.position, x: newX },
-    }));
-
+    setPlayer((prevPlayer) => (prevPlayer ? { ...prevPlayer, position: { ...prevPlayer.position, x: newX } } : null));
     return { ...tetromino, shape: newShape };
   };
 
@@ -206,15 +196,13 @@ export const usePlayer = () => {
     return false;
   };
 
-  const isCreateNewPlayer = (board: Cell[][]): boolean => {
-    if (isValidMove(player.position.x, DEFAULT_PLAYER_POSITION.y, player.tetromino.shape, board)) return true;
-    return false;
-  };
+  const isCreateNewPlayer = (board: Cell[][]): boolean =>
+    player ? isValidMove(player.position.x, DEFAULT_PLAYER_POSITION.y, player.tetromino.shape, board) : false;
 
   const getShadowPlayerPosition = (board: Cell[][]): Position => {
+    if (!player) return { x: 0, y: 0 };
     const { x, y } = player.position;
     const { shape } = player.tetromino;
-
     let i = y;
     while (isValidMove(x, i + 1, shape, board)) {
       i++;
@@ -224,31 +212,28 @@ export const usePlayer = () => {
 
   const holdingTetromino = (): void => {
     setPlayer((prevPlayer) => {
+      if (!prevPlayer) return null;
       const tetrominos = prevPlayer.nextTetrominos;
       const holdTetromino = prevPlayer.tetromino;
       const tetromino = tetrominos.shift() as Tetromino;
-      const newPlayer: Player = {
-        position: prevPlayer.position,
+      return {
+        ...prevPlayer,
         tetromino,
         holdTetromino,
-        nextTetrominos: [],
+        nextTetrominos: tetrominos.length <= 5 ? [...tetrominos, ...randomTetrominos()] : tetrominos,
       };
-      if (tetrominos.length <= 5) {
-        newPlayer.nextTetrominos = [...tetrominos, ...randomTetrominos()];
-      } else newPlayer.nextTetrominos = tetrominos;
-      return newPlayer;
     });
   };
 
   const switchingTetromino = () => {
     setPlayer((prevPlayer) => {
+      if (!prevPlayer) return null;
       const holdTetromino = prevPlayer.holdTetromino as Tetromino;
-      const tetromino = prevPlayer.tetromino;
       return {
         ...prevPlayer,
         position: { ...prevPlayer.position, x: DEFAULT_PLAYER_POSITION.x },
         tetromino: holdTetromino,
-        holdTetromino: tetromino,
+        holdTetromino: prevPlayer.tetromino,
       };
     });
   };

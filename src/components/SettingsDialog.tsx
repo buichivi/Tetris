@@ -3,7 +3,7 @@ import gameAudio, { bgMusicList } from '../types/Audio';
 
 type Props = {
   isOpen: boolean;
-  toggleOpen(isOpen: boolean): void;
+  toggleOpen: (isOpen: boolean) => void;
 };
 
 const SettingsDialog: React.FC<Props> = ({ isOpen, toggleOpen }) => {
@@ -11,24 +11,34 @@ const SettingsDialog: React.FC<Props> = ({ isOpen, toggleOpen }) => {
   const [sfxVolume, setSfxVolume] = useState(gameAudio.sfxVolume);
   const [selectedBGM, setSelectedBGM] = useState('');
 
-  const handleBGMChange = (event: React.ChangeEvent<HTMLSelectElement>) => {};
+  const handleBGMChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedBgMusic = event.target.value;
+    setSelectedBGM(selectedBgMusic);
+    gameAudio.setBgMusic(selectedBgMusic);
+  };
 
-  const handleBGMVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {};
-
-  const handleSFXVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {};
+  const handleVolumeChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    setVolume: React.Dispatch<React.SetStateAction<number>>,
+    setAudioVolume: (volume: number) => void
+  ) => {
+    const volume = Number(event.target.value);
+    setVolume(volume);
+    setAudioVolume(volume);
+  };
 
   return (
-    <React.Fragment>
+    <>
       <input
         type="checkbox"
         name="setting-dialog"
         checked={isOpen}
-        onChange={(e) => toggleOpen(e.currentTarget.checked)}
+        onChange={(e) => toggleOpen(e.target.checked)}
         className="hidden [&:checked+div]:opacity-100 [&:checked+div]:pointer-events-auto [&:checked+div>.settings-content]:translate-y-0"
       />
-      <div className="fixed top-0 left-0 size-full flex items-center justify-center opacity-0 pointer-events-none transition-all">
-        <div className="absolute size-full top-0 left-0 -z-[1] bg-[#000000bb]" onClick={() => toggleOpen(false)}></div>
-        <div className="bg-gray-800 -translate-y-full p-6 w-96 settings-content transition-all">
+      <div className="fixed inset-0 flex items-center justify-center opacity-0 pointer-events-none transition-all">
+        <div className="absolute inset-0 -z-[1] bg-black/75" onClick={() => toggleOpen(false)} />
+        <div className="bg-gray-800 -translate-y-full border-2 p-6 w-96 settings-content transition-all">
           <h3 className="text-2xl font-bold mb-4 text-white text-center">Settings</h3>
           <div className="mb-4">
             <label className="block text-white mb-2">Background Music</label>
@@ -37,13 +47,11 @@ const SettingsDialog: React.FC<Props> = ({ isOpen, toggleOpen }) => {
               onChange={handleBGMChange}
               className="w-full p-2 rounded bg-gray-700 text-white"
             >
-              {bgMusicList.map((bgMusic, index) => {
-                return (
-                  <option value={bgMusic.name} key={index}>
-                    {bgMusic.name}
-                  </option>
-                );
-              })}
+              {bgMusicList.map((bgMusic, index) => (
+                <option value={bgMusic.name} key={index}>
+                  {bgMusic.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="mb-4">
@@ -54,7 +62,7 @@ const SettingsDialog: React.FC<Props> = ({ isOpen, toggleOpen }) => {
               max="1"
               step="0.1"
               value={bgmVolume}
-              onChange={handleBGMVolumeChange}
+              onChange={(e) => handleVolumeChange(e, setBgmVolume, gameAudio.setBgMusicVolume)}
               className="w-full"
             />
           </div>
@@ -66,13 +74,13 @@ const SettingsDialog: React.FC<Props> = ({ isOpen, toggleOpen }) => {
               max="1"
               step="0.1"
               value={sfxVolume}
-              onChange={handleSFXVolumeChange}
+              onChange={(e) => handleVolumeChange(e, setSfxVolume, gameAudio.setSFXVolume)}
               className="w-full"
             />
           </div>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 };
 

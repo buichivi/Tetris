@@ -1,5 +1,5 @@
-import { CELL_SIZE, DEFAULT_CELL_COLOR, Player, Position } from "../types/Types";
-import CellItem from "./Cell";
+import { CELL_SIZE, DEFAULT_CELL_COLOR, Player, Position } from '../types/Types';
+import CellItem from './Cell';
 
 type Props = {
   player: Player;
@@ -7,6 +7,9 @@ type Props = {
 };
 
 const TetrominoShadow: React.FC<Props> = ({ player, shadowPosition }) => {
+  const { tetromino } = player;
+  const shadowColor = '#77777729';
+
   return (
     <div
       className="absolute z-0"
@@ -15,23 +18,20 @@ const TetrominoShadow: React.FC<Props> = ({ player, shadowPosition }) => {
         top: shadowPosition.y * CELL_SIZE,
       }}
     >
-      {player.tetromino.shape.map((row, rowIndex) => (
+      {tetromino.shape.map((row, rowIndex) => (
         <div key={rowIndex} className="flex shrink-0">
-          {row.map((cell, cellIndex) => {
-            const isVisible = cell === 1;
-            return (
-              <CellItem
-                key={cellIndex}
-                cell={{
-                  x: cellIndex,
-                  y: rowIndex,
-                  color: isVisible ? "#77777729" : DEFAULT_CELL_COLOR,
-                  type: isVisible ? "tetromino-block" : "cell",
-                }}
-                className={isVisible ? "" : "opacity-0"}
-              />
-            );
-          })}
+          {row.map((cell, cellIndex) => (
+            <CellItem
+              key={cellIndex}
+              cell={{
+                x: cellIndex,
+                y: rowIndex,
+                color: cell ? shadowColor : DEFAULT_CELL_COLOR,
+                type: cell ? 'tetromino-block' : 'cell',
+              }}
+              className={cell ? '' : 'opacity-0'}
+            />
+          ))}
         </div>
       ))}
     </div>
