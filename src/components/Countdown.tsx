@@ -16,15 +16,15 @@ const Countdown = () => {
 
   if (countdown < 0) return null;
 
-  const displayText = countdown > 0 ? countdown : 'Go';
+  const displayText = countdown > 0 ? countdown : 'Go!';
   const shadowColor = tinycolor('#fde047').darken(30).toString();
 
   return (
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
       <div key={countdown} className="relative">
-        <span className="animation_countdown font-semibold text-5xl text-yellow-300">{displayText}</span>
+        <span className="animation-countdown font-semibold text-5xl text-yellow-300">{displayText}</span>
         <span
-          className="absolute top-1/2 left-1/2 -z-[1] -translate-x-1/2 -translate-y-1/2 animation_countdown_shadow font-semibold text-7xl"
+          className="absolute top-1/2 left-1/2 -z-[1] -translate-x-1/2 -translate-y-1/2 animation-countdown-shadow font-semibold text-7xl"
           style={{ color: shadowColor }}
         >
           {displayText}

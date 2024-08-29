@@ -40,7 +40,7 @@ body {
 
 @keyframes countdown-shadow {
   from {
-    opacity: 0.3;
+    opacity: 0.5;
   }
   to {
     opacity: 0;

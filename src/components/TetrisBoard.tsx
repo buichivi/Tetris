@@ -50,6 +50,7 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
   const [isCollision, setIsCollision] = useState(false);
   const [removingLines, setRemovingLines] = useState(0);
   const [isStartingGame, setIsStartingGame] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
 
   useInterval(() => {
     if (!player || isGameOver || !isStartingGame) return;
@@ -85,6 +86,7 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
   useEffect(() => {
     if (isRemovingLines) {
       setRemovingLines(isRemovingLines);
+      setAnimationKey((prev) => prev + 1); // Increment the key to force re-render
       const timer = setTimeout(() => setRemovingLines(0), 3000);
       return () => clearTimeout(timer);
     }
@@ -124,8 +126,9 @@ const TetrisBoard: React.FC<Props> = ({ isGameOver, resetGameOver }) => {
     >
       <div className="w-fit relative flex flex-col" style={{ height: ROW * CELL_SIZE }}>
         <span
+          key={animationKey} // Add this key prop
           className={`absolute top-40 right-2 text-2xl ${
-            removingLines && '[animation:appearingMessage_ease-out_3s_alternate]'
+            removingLines ? '[animation:appearingMessage_ease-out_3s_forwards]' : ''
           } uppercase`}
         >
           {RemoveMessages[removingLines]}
